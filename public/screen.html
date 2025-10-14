@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Big Screen Viewer</title>
+<style>
+body {margin:0; overflow:hidden; background:#111;}
+#stage {position:relative; width:100vw; height:100vh;}
+.img-item {
+  position:absolute;
+  border-radius:8px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.5);
+  transition: all 1s ease;
+}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+const stage = document.getElementById('stage');
+const placedImages = [];
+
+// collision check
+function isOverlap(x, y, w, h) {
+  for (const img of placedImages) {
+    const rect = img.getBoundingClientRect();
+    if (!(x + w < rect.left || x > rect.right || y + h < rect.top || y > rect.bottom)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function addImage(dataURL, popupDuration = 60000) { // 1 min
+  const img = new Image();
+  img.src = dataURL;
+  img.className = 'img-item';
+  stage.appendChild(img);
+
+  img.onload = () => {
+    // STEP 1: Big center popup
+    const centerW = window.innerWidth * 0.8;
+    const centerH = centerW * (img.naturalHeight / img.naturalWidth);
+    img.style.width = centerW + 'px';
+    img.style.height = centerH + 'px';
+    img.style.left = (window.innerWidth/2 - centerW/2) + 'px';
+    img.style.top = (window.innerHeight/2 - centerH/2) + 'px';
+
+    // STEP 2: After popupDuration, move to random position
+    setTimeout(() => {
+      let smallW = window.innerWidth * 0.2 + Math.random() * (window.innerWidth * 0.15);
+      let smallH = smallW * (img.naturalHeight / img.naturalWidth);
+      let attempts = 0;
+      let randomX, randomY;
+
+      do {
+        randomX = Math.random() * (window.innerWidth - smallW);
+        randomY = Math.random() * (window.innerHeight - smallH);
+        attempts++;
+        if (attempts > 50) { // reduce size if cannot fit
+          smallW *= 0.9;
+          smallH = smallW * (img.naturalHeight / img.naturalWidth);
+          attempts = 0;
+        }
+      } while (isOverlap(randomX, randomY, smallW, smallH));
+
+      img.style.width = smallW + 'px';
+      img.style.height = smallH + 'px';
+      img.style.left = randomX + 'px';
+      img.style.top = randomY + 'px';
+
+      placedImages.push(img); // store for future collision check
+    }, popupDuration);
+  };
+}
+
+// connect to server
+const socket = io("http://localhost:3000");
+socket.on('connect', () => console.log('Connected to server'));
+socket.on('new-image', dataURL => addImage(dataURL, 60000)); // 1 min popup
+</script>
+</body>
+</html>

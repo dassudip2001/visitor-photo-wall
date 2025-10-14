@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Camera Client</title>
+</head>
+<body>
+<h1>Camera Client</h1>
+<video id="video" width="400" height="300" autoplay></video>
+<button id="capture">Capture & Send</button>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+
+<script>
+const video = document.getElementById('video');
+const socket = io('http://localhost:3000');
+
+// Access camera
+navigator.mediaDevices.getUserMedia({video:true})
+  .then(stream => video.srcObject = stream)
+  .catch(err => console.error(err));
+
+document.getElementById('capture').addEventListener('click', () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const dataURL = canvas.toDataURL('image/jpeg');
+  socket.emit('send-image', dataURL);
+});
+</script>
+</body>
+</html>
