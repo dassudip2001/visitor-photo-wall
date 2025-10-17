@@ -22,7 +22,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 
 USER nodejs
 
-EXPOSE 3000
+EXPOSE 5678
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node dist/healthcheck.js
