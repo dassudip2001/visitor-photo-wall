@@ -48,18 +48,33 @@ export async function createApp() {
 
   //  Socket.io events
   io.on("connection", (socket: Socket) => {
+    const { clientId } = socket.handshake.query as Record<string, string>;
+    console.log("Client connected:", socket.id, clientId);
+
+    // Join the room for this place
+    if (clientId) socket.join(clientId);
+
     console.log("Client connected:", socket.id);
 
-    socket.on("send-image", async (data: { image: string; client: number }) => {
+    socket.on("send-image", async (data: { image: string }) => {
       console.log("Received image from camera:", socket.id, data);
 
       try {
-        // Example: save to DB (pseudo, replace with your actual model)
         // await Image.create({ dataURL });
-        // await Image.create({ dataURL });
+        await Image.create({
+          dataURL: data.image,
+          clientId: clientId,
+        });
 
         // Broadcast to all other clients
-        socket.broadcast.emit("new-image", data.image);
+        // socket.broadcast.emit("new-image", {
+        //   image: data.image,
+        //   client: data.client,
+        // });
+        socket.to(clientId).emit("new-image", {
+          image: data.image,
+          client: clientId,
+        });
         // io.to(`client-${data.client}`).emit("new-image", data.image);
       } catch (error) {
         console.error("Error saving image:", error);
