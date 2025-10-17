@@ -3,33 +3,512 @@
 <head>
 <meta charset="utf-8">
 <title>Camera Client</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 20px;
+}
+
+.container {
+  max-width: 600px;
+  width: 100%;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+
+.header p {
+  color: #9ca3af;
+  font-size: 16px;
+}
+
+.camera-card {
+  background: rgba(15, 15, 35, 0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.video-container {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+#video {
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: scaleX(-1);
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  transition: opacity 0.3s ease;
+}
+
+.video-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(99, 102, 241, 0.2);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.video-overlay p {
+  font-size: 16px;
+  color: #9ca3af;
+}
+
+.capture-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+  animation: flash 0.5s ease;
+}
+
+@keyframes flash {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.8; }
+}
+
+.controls {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  flex: 1;
+  min-width: 150px;
+  padding: 16px 32px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(99, 102, 241, 0.6);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulse 2s infinite;
+}
+
+.status-dot.disconnected {
+  background: #ef4444;
+  animation: none;
+}
+
+.status-dot.warning {
+  background: #f59e0b;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.sent-count {
+  color: #a5b4fc;
+  font-weight: 600;
+}
+
+.auto-mode {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 12px;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 13px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.toggle-switch.active {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+.toggle-switch.active .toggle-slider {
+  transform: translateX(24px);
+}
+
+.interval-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.interval-control input {
+  width: 80px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 24px;
+  background: rgba(16, 185, 129, 0.95);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transform: translateX(400px);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification svg {
+  width: 20px;
+  height: 20px;
+}
+</style>
 </head>
 <body>
-<h1>Camera Client</h1>
-<video id="video" width="400" height="300" autoplay></video>
-<button id="capture">Capture & Send</button>
+<div class="container">
+  <div class="header">
+    <h1>📸 Camera Client</h1>
+    <p>Capture and share images instantly</p>
+  </div>
+
+  <div class="camera-card">
+    <div class="video-container">
+      <video id="video" autoplay playsinline></video>
+      <div class="video-overlay" id="videoOverlay">
+        <div class="spinner"></div>
+        <p>Accessing camera...</p>
+      </div>
+      <div class="capture-flash" id="captureFlash"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="captureBtn" disabled>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Capture & Send
+      </button>
+    </div>
+
+    <div class="auto-mode">
+      <span>Auto-Capture Mode</span>
+      <div class="toggle-switch" id="autoToggle">
+        <div class="toggle-slider"></div>
+      </div>
+    </div>
+    <div class="interval-control" id="intervalControl" style="display: none;">
+      <label>Interval (seconds):</label>
+      <input type="number" id="intervalInput" value="5" min="1" max="60">
+    </div>
+
+    <div class="status-bar">
+      <div class="status-item">
+        <span class="status-dot disconnected" id="statusDot"></span>
+        <span id="statusText">Connecting...</span>
+      </div>
+      <div class="status-item">
+        <span>Sent: <span class="sent-count" id="sentCount">0</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notification" id="notification">
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+  </svg>
+  <span>Image sent successfully!</span>
+</div>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
-
 <script>
 const video = document.getElementById('video');
-const socket = io('http://localhost:3000');
+const captureBtn = document.getElementById('captureBtn');
+const videoOverlay = document.getElementById('videoOverlay');
+const captureFlash = document.getElementById('captureFlash');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const sentCount = document.getElementById('sentCount');
+const notification = document.getElementById('notification');
+const autoToggle = document.getElementById('autoToggle');
+const intervalControl = document.getElementById('intervalControl');
+const intervalInput = document.getElementById('intervalInput');
+
+let socket;
+let imagesSent = 0;
+let cameraReady = false;
+let autoMode = false;
+let autoInterval;
+
+// Connect to socket
+socket = io('http://localhost:5678');
+
+socket.on('connect', () => {
+  console.log('Connected to server');
+  statusText.textContent = 'Connected';
+  statusDot.classList.remove('disconnected');
+  statusDot.classList.remove('warning');
+});
+
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+  statusText.textContent = 'Disconnected';
+  statusDot.classList.add('disconnected');
+});
 
 // Access camera
-navigator.mediaDevices.getUserMedia({video:true})
-  .then(stream => video.srcObject = stream)
-  .catch(err => console.error(err));
+navigator.mediaDevices.getUserMedia({video: {facingMode: 'user'}})
+  .then(stream => {
+    video.srcObject = stream;
+    video.onloadedmetadata = () => {
+      videoOverlay.classList.add('hidden');
+      captureBtn.disabled = false;
+      cameraReady = true;
+      statusText.textContent = 'Ready';
+      statusDot.classList.remove('warning');
+    };
+  })
+  .catch(err => {
+    console.error('Camera error:', err);
+    videoOverlay.querySelector('p').textContent = 'Camera access denied';
+    statusText.textContent = 'Camera Error';
+    statusDot.classList.add('warning');
+  });
 
-document.getElementById('capture').addEventListener('click', () => {
+function captureAndSend() {
+  if (!cameraReady) return;
+
   const canvas = document.createElement('canvas');
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   const ctx = canvas.getContext('2d');
+  
+  // Flip horizontally to match video display
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  const dataURL = canvas.toDataURL('image/jpeg');
-  socket.emit('send-image', dataURL);
+  const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+  socket.emit('send-image', { image: dataURL , client:1});
+
+  // Show flash effect
+  const flash = document.createElement('div');
+  flash.className = 'capture-flash';
+  document.querySelector('.video-container').appendChild(flash);
+  setTimeout(() => flash.remove(), 500);
+
+  // Update counter
+  imagesSent++;
+  sentCount.textContent = imagesSent;
+
+  // Show notification
+  notification.classList.add('show');
+  setTimeout(() => notification.classList.remove('show'), 2000);
+}
+
+captureBtn.addEventListener('click', captureAndSend);
+
+// Auto-capture toggle
+autoToggle.addEventListener('click', () => {
+  autoMode = !autoMode;
+  autoToggle.classList.toggle('active');
+  intervalControl.style.display = autoMode ? 'flex' : 'none';
+
+  if (autoMode) {
+    startAutoCapture();
+  } else {
+    stopAutoCapture();
+  }
+});
+
+function startAutoCapture() {
+  const interval = parseInt(intervalInput.value) * 1000;
+  autoInterval = setInterval(captureAndSend, interval);
+  captureBtn.disabled = true;
+}
+
+function stopAutoCapture() {
+  if (autoInterval) {
+    clearInterval(autoInterval);
+    autoInterval = null;
+  }
+  captureBtn.disabled = false;
+}
+
+intervalInput.addEventListener('change', () => {
+  if (autoMode) {
+    stopAutoCapture();
+    startAutoCapture();
+  }
+});
+
+// Keyboard shortcut
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && !autoMode && cameraReady) {
+    e.preventDefault();
+    captureAndSend();
+  }
 });
 </script>
 </body>

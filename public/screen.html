@@ -4,25 +4,520 @@
 <meta charset="utf-8">
 <title>Big Screen Viewer</title>
 <style>
-body {margin:0; overflow:hidden; background:#111;}
-#stage {position:relative; width:100vw; height:100vh;}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #000;
+  overflow: hidden;
+  color: #fff;
+  position: relative;
+}
+
+/* Stunning animated gradient background */
+.gradient-bg {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Floating orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.6;
+  animation: float 20s infinite ease-in-out;
+}
+
+.orb1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #ff6b6b, transparent);
+  top: -250px;
+  left: -250px;
+  animation-delay: 0s;
+}
+
+.orb2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #4ecdc4, transparent);
+  bottom: -200px;
+  right: -200px;
+  animation-delay: 5s;
+}
+
+.orb3 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #ffe66d, transparent);
+  top: 30%;
+  right: 10%;
+  animation-delay: 10s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(100px, -100px) scale(1.1); }
+  66% { transform: translate(-100px, 100px) scale(0.9); }
+}
+
+/* Glass overlay for depth */
+.glass-overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(100px);
+  z-index: 0;
+}
+
+#stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+/* Premium top bar */
+#topBar {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 80px);
+  max-width: 1400px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+#logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #a8edea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.logo-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+.logo-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: white;
+}
+
+#status {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.status-badge:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #00f5a0;
+  box-shadow: 0 0 20px #00f5a0, 0 0 40px rgba(0, 245, 160, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.disconnected {
+  background: #ff006e;
+  box-shadow: 0 0 20px #ff006e, 0 0 40px rgba(255, 0, 110, 0.3);
+  animation: none;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.count-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  min-width: 50px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Image styles - Premium cards */
 .img-item {
-  position:absolute;
-  border-radius:8px;
-  box-shadow:0 8px 20px rgba(0,0,0,0.5);
-  transition: all 1s ease;
+  position: absolute;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 1.5s cubic-bezier(0.23, 1, 0.32, 1);
+  cursor: pointer;
+  object-fit: cover;
+  z-index: 10;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.img-item:hover {
+  transform: scale(1.08) rotate(-2deg);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6),
+              0 0 0 3px rgba(255, 255, 255, 0.3),
+              0 0 60px rgba(255, 255, 255, 0.2);
+  z-index: 100;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.img-item.popup {
+  z-index: 500;
+  animation: dramaticEntry 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8),
+              0 0 100px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes dramaticEntry {
+  0% {
+    transform: scale(0.5) rotate(-15deg);
+    opacity: 0;
+    filter: blur(20px);
+  }
+  60% {
+    transform: scale(1.05) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+/* Floating action controls */
+#controlPanel {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  padding: 16px 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.control-btn {
+  padding: 14px 32px;
+  border: none;
+  border-radius: 14px;
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.control-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.control-btn:hover::before {
+  left: 100%;
+}
+
+.control-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+
+.control-btn.primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+}
+
+.control-btn.secondary {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.control-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+}
+
+.control-btn:active {
+  transform: translateY(0);
+}
+
+/* Connection splash */
+#connectionOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+#connectionOverlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.connection-content {
+  text-align: center;
+}
+
+.mega-spinner {
+  width: 100px;
+  height: 100px;
+  border: 6px solid rgba(255, 255, 255, 0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 40px;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.connection-content h2 {
+  font-size: 42px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: white;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  letter-spacing: -1px;
+}
+
+.connection-content p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+/* Hero welcome */
+#welcomeMessage {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 5;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+#welcomeMessage.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#welcomeMessage h1 {
+  font-size: 72px;
+  font-weight: 800;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #fff 0%, #a8edea 50%, #fed6e3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -2px;
+  text-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: titleFloat 3s ease-in-out infinite;
+}
+
+@keyframes titleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+#welcomeMessage p {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Sparkle effect */
+.sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px white;
+  animation: sparkleAnim 2s infinite;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+@keyframes sparkleAnim {
+  0%, 100% { opacity: 0; transform: scale(0); }
+  50% { opacity: 1; transform: scale(1); }
 }
 </style>
 </head>
 <body>
+<div class="gradient-bg"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="glass-overlay"></div>
+
+<div id="topBar">
+  <div id="logo">
+    <div class="logo-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+    </div>
+    <span>Gallery Stream</span>
+  </div>
+  <div id="status">
+    <div class="status-badge">
+      <span class="status-indicator" id="connectionDot"></span>
+      <span id="connectionStatus">Connecting...</span>
+    </div>
+    <div class="status-badge">
+      <span style="opacity: 0.7; margin-right: -8px;">📸</span>
+      <span class="count-badge" id="imageCount">0</span>
+    </div>
+  </div>
+</div>
+
+<div id="connectionOverlay">
+  <div class="connection-content">
+    <div class="mega-spinner"></div>
+    <h2>Initializing Gallery</h2>
+    <p>Connecting to your stream...</p>
+  </div>
+</div>
+
+<div id="welcomeMessage">
+  <h1>✨ Ready to Showcase ✨</h1>
+  <p>Your amazing photos will appear here</p>
+</div>
+
 <div id="stage"></div>
+
+<div id="controlPanel">
+  <button class="control-btn secondary" onclick="clearAllImages()">Clear Gallery</button>
+  <button class="control-btn primary" onclick="toggleFullscreen()">Fullscreen</button>
+</div>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
 const stage = document.getElementById('stage');
 const placedImages = [];
+let imageCounter = 0;
 
-// collision check
+function updateImageCount() {
+  const countEl = document.getElementById('imageCount');
+  countEl.textContent = imageCounter;
+  countEl.style.animation = 'none';
+  setTimeout(() => countEl.style.animation = 'pulse 0.5s ease', 10);
+}
+
+function createSparkle(x, y) {
+  const sparkle = document.createElement('div');
+  sparkle.className = 'sparkle';
+  sparkle.style.left = x + 'px';
+  sparkle.style.top = y + 'px';
+  document.body.appendChild(sparkle);
+  setTimeout(() => sparkle.remove(), 2000);
+}
+
 function isOverlap(x, y, w, h) {
   for (const img of placedImages) {
     const rect = img.getBoundingClientRect();
@@ -33,33 +528,49 @@ function isOverlap(x, y, w, h) {
   return false;
 }
 
-function addImage(dataURL, popupDuration = 60000) { // 1 min
+function addImage(dataURL, popupDuration = 60000) {
   const img = new Image();
   img.src = dataURL;
-  img.className = 'img-item';
+  img.className = 'img-item popup';
   stage.appendChild(img);
+  
+  imageCounter++;
+  updateImageCount();
+  
+  if (imageCounter === 1) {
+    document.getElementById('welcomeMessage').classList.add('hidden');
+  }
 
   img.onload = () => {
-    // STEP 1: Big center popup
-    const centerW = window.innerWidth * 0.8;
+    const centerW = Math.min(window.innerWidth * 0.75, 1000);
     const centerH = centerW * (img.naturalHeight / img.naturalWidth);
     img.style.width = centerW + 'px';
     img.style.height = centerH + 'px';
     img.style.left = (window.innerWidth/2 - centerW/2) + 'px';
     img.style.top = (window.innerHeight/2 - centerH/2) + 'px';
 
-    // STEP 2: After popupDuration, move to random position
+    // Sparkles on entry
+    for (let i = 0; i < 8; i++) {
+      setTimeout(() => {
+        createSparkle(
+          window.innerWidth/2 + (Math.random() - 0.5) * centerW,
+          window.innerHeight/2 + (Math.random() - 0.5) * centerH
+        );
+      }, i * 100);
+    }
+
     setTimeout(() => {
-      let smallW = window.innerWidth * 0.2 + Math.random() * (window.innerWidth * 0.15);
+      img.classList.remove('popup');
+      let smallW = window.innerWidth * 0.14 + Math.random() * (window.innerWidth * 0.18);
       let smallH = smallW * (img.naturalHeight / img.naturalWidth);
       let attempts = 0;
       let randomX, randomY;
 
       do {
         randomX = Math.random() * (window.innerWidth - smallW);
-        randomY = Math.random() * (window.innerHeight - smallH);
+        randomY = Math.random() * (window.innerHeight - smallH - 180) + 120;
         attempts++;
-        if (attempts > 50) { // reduce size if cannot fit
+        if (attempts > 50) {
           smallW *= 0.9;
           smallH = smallW * (img.naturalHeight / img.naturalWidth);
           attempts = 0;
@@ -71,15 +582,82 @@ function addImage(dataURL, popupDuration = 60000) { // 1 min
       img.style.left = randomX + 'px';
       img.style.top = randomY + 'px';
 
-      placedImages.push(img); // store for future collision check
+      placedImages.push(img);
     }, popupDuration);
+  };
+  
+  img.onclick = () => {
+    img.style.transform = 'scale(1.6) rotate(0deg)';
+    img.style.zIndex = '1000';
+    createSparkle(
+      parseFloat(img.style.left) + parseFloat(img.style.width)/2,
+      parseFloat(img.style.top) + parseFloat(img.style.height)/2
+    );
+    setTimeout(() => {
+      img.style.transform = '';
+      img.style.zIndex = '10';
+    }, 2000);
   };
 }
 
-// connect to server
-const socket = io("http://localhost:3000");
-socket.on('connect', () => console.log('Connected to server'));
-socket.on('new-image', dataURL => addImage(dataURL, 60000)); // 1 min popup
+function clearAllImages() {
+  placedImages.forEach(img => {
+    img.style.transition = 'all 0.5s ease';
+    img.style.opacity = '0';
+    img.style.transform = 'scale(0.5)';
+  });
+  setTimeout(() => {
+    placedImages.forEach(img => img.remove());
+    placedImages.length = 0;
+    imageCounter = 0;
+    updateImageCount();
+    document.getElementById('welcomeMessage').classList.remove('hidden');
+  }, 500);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+const socket = io("http://localhost:5678");
+
+socket.on('connect', () => {
+  console.log('Connected to server');
+  document.getElementById('connectionStatus').textContent = 'Live';
+  document.getElementById('connectionDot').classList.remove('disconnected');
+  document.getElementById('connectionOverlay').classList.add('hidden');
+});
+
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+  document.getElementById('connectionStatus').textContent = 'Offline';
+  document.getElementById('connectionDot').classList.add('disconnected');
+});
+
+socket.on('new-image', dataURL => addImage(dataURL, 10000));
+
+window.testAddImage = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 400;
+  canvas.height = 300;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 400, 300);
+  gradient.addColorStop(0, `hsl(${Math.random() * 360}, 80%, 60%)`);
+  gradient.addColorStop(1, `hsl(${Math.random() * 360}, 80%, 40%)`);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 400, 300);
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 40px Poppins';
+  ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 10;
+  ctx.fillText('Photo #' + (imageCounter + 1), 200, 150);
+  addImage(canvas.toDataURL(), 5000);
+};
 </script>
 </body>
 </html>
